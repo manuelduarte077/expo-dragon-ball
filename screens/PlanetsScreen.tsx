@@ -13,8 +13,8 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useStore } from "../core/store/store";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useApiStore } from "@/core/store/api.store";
 
 const { width } = Dimensions.get("window");
 
@@ -34,7 +34,7 @@ interface Planet {
 }
 
 export default function PlanetsScreen() {
-  const { planets, fetchPlanets, isLoading, error } = useStore();
+  const { planets, fetchPlanets, isLoading, error } = useApiStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 

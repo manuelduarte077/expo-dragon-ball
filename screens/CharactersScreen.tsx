@@ -13,13 +13,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { toast } from "sonner-native";
-import { useStore } from "@/core/store/store";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ErrorView } from "@/components/ui/ErrorView";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { CharacterCard } from "@/components/characters/CharacterCard";
 import { FilterModal } from '@/components/characters/FilterModal';
+import { useApiStore } from "@/core/store/api.store";
 
 type RootStackParamList = {
   CharacterDetail: { characterId: number };
@@ -27,7 +27,7 @@ type RootStackParamList = {
 
 export default function CharactersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { characters, planets, fetchCharacters, fetchPlanets, isLoading, error } = useStore();
+  const { characters, planets, fetchCharacters, fetchPlanets, isLoading, error } = useApiStore();
   const [filteredCharacters, setFilteredCharacters] = useState(characters);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);

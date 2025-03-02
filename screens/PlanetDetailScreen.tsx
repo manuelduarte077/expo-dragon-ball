@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { toast } from "sonner-native";
-import { DragonBallAPI } from "@/core/api/dragonball.service";
+import { dragonBallAPI } from "@/services/api.service";
 import { Planet } from "@/interface/planet.interface";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -46,7 +46,7 @@ export default function PlanetDetailScreen() {
   const fetchPlanetData = async () => {
     try {
       setLoading(true);
-      const planetData = await DragonBallAPI.getPlanetById(planetId);
+      const planetData = await dragonBallAPI.getPlanetById(planetId);
       setPlanet(planetData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
