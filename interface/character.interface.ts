@@ -10,8 +10,15 @@ export interface Character {
   description: string;
   image: string;
   affiliation: string;
-  transformations?: number[]; // IDs de las transformaciones
-  planets?: number[]; // IDs de los planetas
+  originPlanet?: {
+    id: number;
+    name: string;
+  };
+  isAlive?: boolean;
+  transformations?: Array<{
+    id: number;
+    name: string;
+  }>;
   deletedAt: null | string;
 }
 

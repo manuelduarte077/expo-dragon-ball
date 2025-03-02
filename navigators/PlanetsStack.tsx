@@ -1,7 +1,7 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import PlanetsScreen from '../screens/PlanetsScreen';
-import PlanetDetailScreen from '@/screens/PlanetDetailScreen';
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import PlanetsScreen from "../screens/PlanetsScreen";
+import PlanetDetailScreen from "@/screens/PlanetDetailScreen";
 
 const Stack = createNativeStackNavigator();
 

@@ -9,51 +9,70 @@ import {
   ActivityIndicator,
   FlatList
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons,     } from "@expo/vector-icons";
 import { toast } from "sonner-native";
 import { DragonBallAPI } from '@/core/api/dragonball.service';
+import { Planet } from '@/interface/planet.interface';
+import { Character } from '@/interface/character.interface';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+  PlanetsTab: {
+    screen: string;
+    params: { planetId: number };
+  };
+  CharactersStack: {
+    screen: string;
+    params: { characterId: number };
+  };
+  PlanetsStack: {
+    screen: string;
+    params: { planetId: number };
+  };
+};
+
+interface PlanetDetailScreenProps {
+  planetId: number;
+}
 
 export default function PlanetDetailScreen() {
   const route = useRoute();
-  const navigation = useNavigation();
-  const { planetId } = route.params;
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { planetId } = route.params as PlanetDetailScreenProps;
   
-  const [planet, setPlanet] = useState(null);
-  const [residents, setResidents] = useState([]);
+  const [planet, setPlanet] = useState<Planet | null>(null);
+  const [residents, setResidents] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [residentsLoading, setResidentsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPlanetData = async () => {
+    try {
+      setLoading(true);
+      const planetData = await DragonBallAPI.getPlanetById(planetId);
+      setPlanet(planetData);
+
+      setResidentsLoading(true);
+      const charactersResponse = await DragonBallAPI.getCharacters({ limit: 100 });
+      
+      const planetResidents = charactersResponse.items.filter(
+        (character: Character) => character.originPlanet?.id === planetId
+      );
+      setResidents(planetResidents);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      toast.error('Error loading planet details');
+    } finally {
+      setLoading(false);
+      setResidentsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPlanetData = async () => {
-      try {
-        setLoading(true);
-        // Obtener detalles del planeta
-        const planetData = await DragonBallAPI.getPlanetById(planetId);
-        setPlanet(planetData);
-
-        // Obtener personajes para encontrar residentes
-        setResidentsLoading(true);
-        const charactersResponse = await DragonBallAPI.getCharacters({ limit: 100 });
-        
-        // Filtrar personajes por planeta
-        const planetResidents = charactersResponse.items.filter(
-          character => character.originPlanet?.id === planetId
-        );
-        setResidents(planetResidents);
-        
-      } catch (err) {
-        setError(err.message);
-        toast.error('Error loading planet details');
-      } finally {
-        setLoading(false);
-        setResidentsLoading(false);
-      }
-    };
-
     fetchPlanetData();
   }, [planetId]);
 
@@ -62,10 +81,10 @@ export default function PlanetDetailScreen() {
     fetchPlanetData();
   };
 
-  const renderCharacterCard = ({ item }) => (
+  const renderCharacterCard = ({ item }: { item: Character }) => (
     <TouchableOpacity 
       style={styles.characterCard}
-      onPress={() => navigation.navigate('CharacterDetail', { characterId: item.id })}
+      onPress={() => navigation.navigate('CharactersStack', { screen: 'CharacterDetail', params: { characterId: item.id } })}
     >
       <Image
         source={{ 
@@ -116,16 +135,15 @@ export default function PlanetDetailScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{planet.name}</Text>
+          <Text style={styles.headerTitle}>{planet?.name}</Text>
           <View style={styles.placeholder} />
         </View>
         
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Planet Hero Section */}
           <View style={styles.heroSection}>
             <Image
               source={{ 
-                uri: `https://api.a0.dev/assets/image?text=planet ${planet.name} from dragon ball landscape view from space&seed=${planet.id}` 
+                uri: `https://api.a0.dev/assets/image?text=planet ${planet?.name} from dragon ball landscape view from space&seed=${planet?.id}` 
               }}
               style={styles.planetImage}
               resizeMode="cover"
@@ -136,8 +154,8 @@ export default function PlanetDetailScreen() {
               style={styles.heroGradient}
             >
               <View style={styles.planetNameContainer}>
-                <Text style={styles.planetName}>{planet.name}</Text>
-                {planet.isDestroyed && (
+                <Text style={styles.planetName}>{planet?.name}</Text>
+                {planet?.isDestroyed && (
                   <View style={styles.destroyedBadge}>
                     <Text style={styles.destroyedText}>Destroyed</Text>
                   </View>
@@ -149,11 +167,11 @@ export default function PlanetDetailScreen() {
           {/* Planet Information */}
           <View style={styles.infoContainer}>
             <View style={styles.infoRow}>
-              <FontAwesome5 name="globe-americas" size={22} color="#3367FF" />
+              <Ionicons name="globe-outline" size={22} color="#3367FF" />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Description</Text>
                 <Text style={styles.infoValue}>
-                  {planet.description || 'No description available for this planet.'}
+                  {planet?.description || 'No description available for this planet.'}
                 </Text>
               </View>
             </View>
@@ -178,8 +196,10 @@ export default function PlanetDetailScreen() {
               />
             ) : (
               <View style={styles.noResidentsContainer}>
-                <FontAwesome5 name="user-slash" size={32} color="#666" />
-                <Text style={styles.noResidentsText}>No known residents</Text>
+                <Ionicons name="people-outline" size={32} color="#666" />
+                <Text style={styles.noResidentsText}>
+                  No known residents
+                </Text>
               </View>
             )}
           </View>
@@ -190,7 +210,7 @@ export default function PlanetDetailScreen() {
             <View style={styles.orbContainer}>
               <Image
                 source={{ 
-                  uri: `https://api.a0.dev/assets/image?text=animated rotating planet ${planet.name} from dragon ball&seed=${planet.id + 10}` 
+                  uri: `https://api.a0.dev/assets/image?text=animated rotating planet ${planet?.name} from dragon ball&seed=${planet?.id + 10}` 
                 }}
                 style={styles.orbImage}
                 resizeMode="contain"
@@ -410,3 +430,5 @@ const styles = StyleSheet.create({
     height: '100%',
   },
 });
+
+

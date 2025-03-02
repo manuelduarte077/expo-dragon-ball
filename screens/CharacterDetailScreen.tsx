@@ -11,22 +11,35 @@ import {
   Animated
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
-import { PanGestureHandler } from 'react-native-gesture-handler';
+import { GestureEvent, PanGestureHandler } from 'react-native-gesture-handler';
 import { toast } from 'sonner-native';
+import { Character } from '@/interface/character.interface';
 
 const { width } = Dimensions.get('window');
 
+type RootStackParamList = {
+  PlanetsTab: {
+    screen: string;
+    params: { planetId: number };
+  };
+};
+
+interface CharacterDetailScreenProps {
+  characterId: number;
+}
+
 export default function CharacterDetailScreen() {
   const route = useRoute();
-  const navigation = useNavigation();
-  const { characterId } = route.params;
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { characterId } = route.params as CharacterDetailScreenProps;
   
-  const [character, setCharacter] = useState(null);
+  const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [modelLoading, setModelLoading] = useState(false);
   const [showModel, setShowModel] = useState(false);
   
@@ -42,7 +55,7 @@ export default function CharacterDetailScreen() {
         const data = await response.json();
         setCharacter(data);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error');
         toast.error('Error loading character details');
       } finally {
         setLoading(false);
@@ -71,10 +84,10 @@ export default function CharacterDetailScreen() {
     }, 2000);
   };
 
-  const handleGesture = (event) => {
+  const handleGesture = (event: GestureEvent) => {
     // Handle 3D model rotation based on gesture
-    rotateX.setValue(event.nativeEvent.translationY / 100);
-    rotateY.setValue(event.nativeEvent.translationX / 100);
+    rotateX.setValue((event.nativeEvent.translationY as number) / 100);
+    rotateY.setValue((event.nativeEvent.translationX as number)  / 100);
   };
 
   const formatTransformations = () => {
@@ -143,7 +156,7 @@ export default function CharacterDetailScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{character.name}</Text>
+          <Text style={styles.headerTitle}>{character?.name}</Text>
           <View style={styles.placeholder} />
         </View>
         
@@ -152,7 +165,7 @@ export default function CharacterDetailScreen() {
           <View style={styles.heroSection}>
             <Image
               source={{ 
-                uri: character.image || `https://api.a0.dev/assets/image?text=dragon ball character ${character.name}&seed=${character.id}` 
+                uri: character?.image || `https://api.a0.dev/assets/image?text=dragon ball character ${character?.name}&seed=${character?.id}` 
               }}
               style={styles.characterImage}
               resizeMode="cover"
@@ -163,8 +176,8 @@ export default function CharacterDetailScreen() {
               style={styles.heroGradient}
             >
               <View style={styles.characterNameContainer}>
-                <Text style={styles.characterName}>{character.name}</Text>
-                {character.isAlive === false && (
+                <Text style={styles.characterName}>{character?.name}</Text>
+                {character?.isAlive === false && (
                   <View style={styles.deceasedBadge}>
                     <Text style={styles.deceasedText}>Deceased</Text>
                   </View>
@@ -174,24 +187,24 @@ export default function CharacterDetailScreen() {
               <View style={styles.characterInfoRow}>
                 <View style={styles.infoChip}>
                   <MaterialCommunityIcons name="dna" size={16} color="#FF6B00" />
-                  <Text style={styles.infoText}>{character.race || 'Unknown Race'}</Text>
+                  <Text style={styles.infoText}>{character?.race || 'Unknown Race'}</Text>
                 </View>
                 
-                {character.gender && (
+                {character?.gender && (
                   <View style={styles.infoChip}>
                     <Ionicons 
-                      name={character.gender.toLowerCase() === 'male' ? 'male' : 'female'} 
+                      name={character?.gender.toLowerCase() === 'male' ? 'male' : 'female'} 
                       size={16} 
                       color="#4a69ff" 
                     />
-                    <Text style={styles.infoText}>{character.gender}</Text>
+                    <Text style={styles.infoText}>{character?.gender}</Text>
                   </View>
                 )}
                 
-                {character.ki && (
+                {character?.ki && (
                   <View style={styles.infoChip}>
                     <MaterialCommunityIcons name="flash" size={16} color="#FFC107" />
-                    <Text style={styles.infoText}>Power: {character.ki}</Text>
+                    <Text style={styles.infoText}>Power: {character?.ki}</Text>
                   </View>
                 )}
               </View>
@@ -230,7 +243,7 @@ export default function CharacterDetailScreen() {
                   >
                     <Image
                       source={{ 
-                        uri: `https://api.a0.dev/assets/image?text=3d model of ${character.name} from dragon ball z in T-pose&seed=${character.id}` 
+                        uri: `https://api.a0.dev/assets/image?text=3d model of ${character?.name} from dragon ball z in T-pose&seed=${character?.id}` 
                       }}
                       style={styles.modelImage}
                       resizeMode="contain"
@@ -248,27 +261,34 @@ export default function CharacterDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.descriptionText}>
-              {character.description || 'No description available for this character.'}
+              {character?.description || 'No description available for this character.'}
             </Text>
           </View>
           
           {/* Planet Info */}
-          {character.originPlanet && (
+          {character?.originPlanet && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Origin Planet</Text>
               <TouchableOpacity 
                 style={styles.planetCard}
-                onPress={() => navigation.navigate('PlanetDetail', { planetId: character.originPlanet.id })}
+                onPress={() => {
+                  if (character?.originPlanet?.id) {
+                    navigation.navigate('PlanetsTab', {
+                      screen: 'PlanetDetail',
+                      params: { planetId: character.originPlanet.id }
+                    });
+                  }
+                }}
               >
                 <Image
                   source={{ 
-                    uri: `https://api.a0.dev/assets/image?text=planet ${character.originPlanet.name} from dragon ball&seed=${character.originPlanet.id}` 
+                    uri: `https://api.a0.dev/assets/image?text=planet ${character?.originPlanet?.name} from dragon ball&seed=${character?.originPlanet?.id}` 
                   }}
                   style={styles.planetImage}
                   resizeMode="cover"
                 />
                 <View style={styles.planetInfo}>
-                  <Text style={styles.planetName}>{character.originPlanet.name}</Text>
+                  <Text style={styles.planetName}>{character?.originPlanet?.name}</Text>
                   <Text style={styles.viewPlanetText}>View Details</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#AAA" />
@@ -285,7 +305,7 @@ export default function CharacterDetailScreen() {
           )}
           
           {/* Affiliations */}
-          {character.affiliation && (
+          {character?.affiliation && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Affiliation</Text>
               <View style={styles.affiliationChip}>
