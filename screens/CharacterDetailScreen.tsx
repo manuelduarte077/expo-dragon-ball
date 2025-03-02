@@ -10,14 +10,14 @@ import {
   Dimensions,
   Animated
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
-import { GestureEvent, PanGestureHandler } from 'react-native-gesture-handler';
-import { toast } from 'sonner-native';
-import { Character } from '@/interface/character.interface';
+import { useRoute, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { GestureEvent, PanGestureHandler } from "react-native-gesture-handler";
+import { toast } from "sonner-native";
+import { Character } from "@/interface/character.interface";
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +25,9 @@ type RootStackParamList = {
   PlanetsTab: {
     screen: string;
     params: { planetId: number };
+  };
+  TransformationDetail: {
+    transformationId: number;
   };
 };
 
@@ -85,28 +88,37 @@ export default function CharacterDetailScreen() {
   };
 
   const handleGesture = (event: GestureEvent) => {
-    // Handle 3D model rotation based on gesture
     rotateX.setValue((event.nativeEvent.translationY as number) / 100);
     rotateY.setValue((event.nativeEvent.translationX as number)  / 100);
   };
 
   const formatTransformations = () => {
-    if (!character || !character.transformations || character.transformations.length === 0) {
+    if (!character?.transformations || character.transformations.length === 0) {
       return null;
     }
     
     return (
       <View style={styles.sectionContent}>
         {character.transformations.map((transformation, index) => (
-          <View key={index} style={styles.transformationItem}>
+          <TouchableOpacity 
+            key={transformation.id} 
+            style={styles.transformationCard}
+            onPress={() => navigation.navigate('TransformationDetail', {
+              transformationId: transformation.id
+            })}
+          >
             <LinearGradient
               colors={['#ff7e00', '#ff9500']}
               style={styles.transformationBadge}
             >
               <Text style={styles.transformationBadgeText}>{index + 1}</Text>
             </LinearGradient>
-            <Text style={styles.transformationName}>{transformation.name}</Text>
-          </View>
+            <View style={styles.transformationInfo}>
+              <Text style={styles.transformationName}>{transformation.name}</Text>
+              <Text style={styles.transformationPower}>Power Level: {transformation.ki || 'Unknown'}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#AAA" />
+          </TouchableOpacity>
         ))}
       </View>
     );
@@ -203,7 +215,7 @@ export default function CharacterDetailScreen() {
                 
                 {character?.ki && (
                   <View style={styles.infoChip}>
-                    <MaterialCommunityIcons name="flash" size={16} color="#FFC107" />
+                    <Ionicons name="flash" size={16} color="#FFC107" />
                     <Text style={styles.infoText}>Power: {character?.ki}</Text>
                   </View>
                 )}
@@ -214,7 +226,7 @@ export default function CharacterDetailScreen() {
                 onPress={handleShowModel}
                 disabled={showModel}
               >
-                <FontAwesome5 name="cube" size={16} color="white" style={styles.buttonIcon} />
+                <Ionicons name="cube" size={16} color="white" style={styles.buttonIcon} />
                 <Text style={styles.viewModelButtonText}>View 3D Model</Text>
               </TouchableOpacity>
             </LinearGradient>
@@ -261,10 +273,11 @@ export default function CharacterDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.descriptionText}>
-              {character?.description || 'No description available for this character.'}
+              {character?.description ||
+                "No description available for this character."}
             </Text>
           </View>
-          
+
           {/* Planet Info */}
           {character?.originPlanet && (
             <View style={styles.section}>
@@ -537,7 +550,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FF6B00',
   },
-  transformationItem: {
+  transformationCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -557,9 +570,18 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  transformationInfo: {
+    flex: 1,
+  },
   transformationName: {
     color: 'white',
     fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  transformationPower: {
+    color: '#AAA',
+    fontSize: 14,
   },
   affiliationChip: {
     backgroundColor: 'rgba(255,255,255,0.08)',

@@ -18,16 +18,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { toast } from "sonner-native";
 import { useStore } from "../core/store/store";
+import { Character } from "@/interface/character.interface";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 const { width } = Dimensions.get("window");
 
-interface Character {
-  id: number;
-  name: string;
-  image: string;
-  isAlive: boolean;
-  originPlanet: { id: number; name: string };
-}
+type RootStackParamList = {
+  CharacterDetail: { characterId: number };
+};
 
 export default function CharactersScreen() {
   const {
@@ -38,11 +36,11 @@ export default function CharactersScreen() {
     isLoading,
     error,
   } = useStore();
-  const navigation = useNavigation();
-  const [filteredCharacters, setFilteredCharacters] = useState([]);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [filteredCharacters, setFilteredCharacters] = useState<Character[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedPlanet, setSelectedPlanet] = useState(null);
+  const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -85,7 +83,7 @@ export default function CharactersScreen() {
     setShowFilters(false);
   };
 
-  const renderCharacterCard = ({ item }) => (
+  const renderCharacterCard = ({ item }: { item: Character }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() =>
@@ -188,29 +186,11 @@ export default function CharactersScreen() {
   const loadMoreCharacters = async () => {
     if (isLoading || filteredCharacters.length === characters.length) return;
 
-    setIsLoading(true);
     try {
-      // Fetch more characters
-      const moreCharactersResponse = await fetch(
-        "https://dragonball-api.com/api/characters"
-      );
-      if (!moreCharactersResponse.ok)
-        throw new Error("Failed to fetch more characters");
-      const moreCharactersData = await moreCharactersResponse.json();
-
-      setCharacters((prevCharacters) => [
-        ...prevCharacters,
-        ...moreCharactersData,
-      ]);
-      setFilteredCharacters((prevFilteredCharacters) => [
-        ...prevFilteredCharacters,
-        ...moreCharactersData,
-      ]);
-    } catch (err) {
-      setError(err.message);
+      await fetchCharacters();
+      applyFilters();
+    } catch (error) {
       toast.error("Error loading more characters");
-    } finally {
-      setIsLoading(false);
     }
   };
 

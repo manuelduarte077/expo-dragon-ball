@@ -3,22 +3,23 @@ import { QueryParams, PaginatedResponse } from "./api.interface";
 export interface Character {
   id: number;
   name: string;
-  ki: string;
-  maxKi: string;
-  race: string;
-  gender: Gender;
-  description: string;
-  image: string;
-  affiliation: string;
+  ki?: number;
+  maxKi?: number;
+  race?: string;
+  gender?: string;
+  description?: string;
+  image?: string;
+  affiliation?: string;
   originPlanet?: {
     id: number;
     name: string;
   };
-  isAlive?: boolean;
-  transformations?: Array<{
+  transformations?: {
     id: number;
     name: string;
-  }>;
+    ki?: number;
+  }[];
+  isAlive?: boolean;
   deletedAt: null | string;
 }
 
