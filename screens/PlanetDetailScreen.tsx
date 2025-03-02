@@ -7,10 +7,10 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { toast } from "sonner-native";
 import { dragonBallAPI } from "@/services/api.service";
@@ -86,91 +86,80 @@ export default function PlanetDetailScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={["#1a1a2e", "#16213e", "#1a1a2e"]}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.heroSection}>
+          <Image
+            source={{
+              uri: `https://api.a0.dev/assets/image?text=planet ${planet?.name} from dragon ball landscape view from space&seed=${planet?.id}`,
+            }}
+            style={styles.planetImage}
+            resizeMode="cover"
+          />
+
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.7)"]}
+            style={styles.heroGradient}
           >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{planet?.name}</Text>
-          <View style={styles.placeholder} />
+            <View style={styles.planetNameContainer}>
+              <Text style={styles.planetName}>{planet?.name}</Text>
+              {planet?.isDestroyed && (
+                <View style={styles.destroyedBadge}>
+                  <Text style={styles.destroyedText}>Destroyed</Text>
+                </View>
+              )}
+            </View>
+          </LinearGradient>
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.heroSection}>
+        {/* Planet Information */}
+        <View style={styles.infoContainer}>
+          <View style={styles.infoRow}>
+            <Ionicons name="globe-outline" size={22} color="#3367FF" />
+            <View style={styles.infoTextContainer}>
+              <Text style={styles.infoLabel}>Description</Text>
+              <Text style={styles.infoValue}>
+                {planet?.description || "No description available for this planet."}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Additional Information */}
+        <View style={styles.orbSection}>
+          <Text style={styles.orbSectionTitle}>Planet Animation</Text>
+          <View style={styles.orbContainer}>
             <Image
               source={{
-                uri: `https://api.a0.dev/assets/image?text=planet ${planet?.name} from dragon ball landscape view from space&seed=${planet?.id}`,
+                uri: `https://api.a0.dev/assets/image?text=animated rotating planet ${planet?.name} from dragon ball&seed=${planet?.id || 1}`,
               }}
-              style={styles.planetImage}
-              resizeMode="cover"
+              style={styles.orbImage}
+              resizeMode="contain"
             />
-
-            <LinearGradient
-              colors={["transparent", "rgba(26, 26, 46, 0.8)", "#1a1a2e"]}
-              style={styles.heroGradient}
-            >
-              <View style={styles.planetNameContainer}>
-                <Text style={styles.planetName}>{planet?.name}</Text>
-                {planet?.isDestroyed && (
-                  <View style={styles.destroyedBadge}>
-                    <Text style={styles.destroyedText}>Destroyed</Text>
-                  </View>
-                )}
-              </View>
-            </LinearGradient>
           </View>
+        </View>
+      </ScrollView>
 
-          {/* Planet Information */}
-          <View style={styles.infoContainer}>
-            <View style={styles.infoRow}>
-              <Ionicons name="globe-outline" size={22} color="#3367FF" />
-              <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>Description</Text>
-                <Text style={styles.infoValue}>
-                  {planet?.description ||
-                    "No description available for this planet."}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Additional Information */}
-          <View style={styles.orbSection}>
-            <Text style={styles.orbSectionTitle}>Planet Animation</Text>
-            <View style={styles.orbContainer}>
-              <Image
-                source={{
-                  uri: `https://api.a0.dev/assets/image?text=animated rotating planet ${
-                    planet?.name
-                  } from dragon ball&seed=${planet?.id || 1}`,
-                }}
-                style={styles.orbImage}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+      {/* Floating Back Button */}
+      <TouchableOpacity
+        style={styles.floatingBackButton}
+        onPress={() => navigation.goBack()}
+      >
+        <View style={styles.backButtonContainer}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#1a1a2e",
   },
-  safeArea: {
+  scrollView: {
     flex: 1,
   },
   loadingContainer: {
@@ -207,35 +196,14 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    zIndex: 10,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
   heroSection: {
+    width: "100%",
+    height: 600,
     position: "relative",
-    height: 250,
   },
   planetImage: {
     width: "100%",
-    height: 250,
+    height: 600,
     position: "absolute",
   },
   heroGradient: {
@@ -243,7 +211,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 100,
+    height: 200,
     justifyContent: "flex-end",
     padding: 16,
   },
@@ -252,10 +220,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   planetName: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "bold",
     color: "white",
     marginRight: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 10,
   },
   destroyedBadge: {
     backgroundColor: "rgba(255, 0, 0, 0.8)",
@@ -270,6 +241,9 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     padding: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    margin: 16,
+    borderRadius: 16,
   },
   infoRow: {
     flexDirection: "row",
@@ -293,6 +267,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 8,
     marginBottom: 24,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    margin: 16,
+    borderRadius: 16,
   },
   orbSectionTitle: {
     fontSize: 20,
@@ -309,5 +286,16 @@ const styles = StyleSheet.create({
   orbImage: {
     width: "100%",
     height: "100%",
+  },
+  floatingBackButton: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 10,
+  },
+  backButtonContainer: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 20,
+    padding: 8,
   },
 });
