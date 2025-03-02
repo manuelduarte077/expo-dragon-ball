@@ -1,4 +1,5 @@
 import { QueryParams, PaginatedResponse } from "./api.interface";
+import { Character } from "./character.interface";
 
 export interface Planets {
   items: Planet[];
@@ -12,7 +13,7 @@ export interface Planet {
   isDestroyed: boolean;
   description: string;
   image: string;
-  characters?: number[]; // IDs de los personajes relacionados
+  characters: Character[];
   deletedAt: null | string;
 }
 
