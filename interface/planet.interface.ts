@@ -1,3 +1,5 @@
+import { QueryParams, PaginatedResponse } from "./api.interface";
+
 export interface Planets {
   items: Planet[];
   meta: Meta;
@@ -10,7 +12,8 @@ export interface Planet {
   isDestroyed: boolean;
   description: string;
   image: string;
-  deletedAt: null;
+  characters?: number[]; // IDs de los personajes relacionados
+  deletedAt: null | string;
 }
 
 export interface Links {
@@ -27,3 +30,9 @@ export interface Meta {
   totalPages: number;
   currentPage: number;
 }
+
+export interface PlanetQueryParams extends QueryParams {
+  isDestroyed?: boolean;
+}
+
+export type PlanetsResponse = PaginatedResponse<Planet>;
