@@ -10,10 +10,11 @@ import {
   FlatList
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { toast } from 'sonner-native';
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import { toast } from "sonner-native";
+import { DragonBallAPI } from '@/core/api/dragonball.service';
 
 export default function PlanetDetailScreen() {
   const route = useRoute();
@@ -29,34 +30,37 @@ export default function PlanetDetailScreen() {
   useEffect(() => {
     const fetchPlanetData = async () => {
       try {
-        // Fetch planet details
-        const planetResponse = await fetch(`https://web.dragonball-api.com/api/planets/${planetId}`);
-        if (!planetResponse.ok) throw new Error('Failed to fetch planet details');
-        const planetData = await planetResponse.json();
+        setLoading(true);
+        // Obtener detalles del planeta
+        const planetData = await DragonBallAPI.getPlanetById(planetId);
         setPlanet(planetData);
-        
-        // Fetch characters to find residents of this planet
+
+        // Obtener personajes para encontrar residentes
         setResidentsLoading(true);
-        const charactersResponse = await fetch('https://web.dragonball-api.com/api/characters?limit=100');
-        if (!charactersResponse.ok) throw new Error('Failed to fetch characters');
-        const charactersData = await charactersResponse.json();
+        const charactersResponse = await DragonBallAPI.getCharacters({ limit: 100 });
         
-        // Filter characters by planet
-        const planetResidents = charactersData.filter(
-          character => character.originPlanet && character.originPlanet.id === planetId
+        // Filtrar personajes por planeta
+        const planetResidents = charactersResponse.items.filter(
+          character => character.originPlanet?.id === planetId
         );
         setResidents(planetResidents);
-        setResidentsLoading(false);
+        
       } catch (err) {
         setError(err.message);
         toast.error('Error loading planet details');
       } finally {
         setLoading(false);
+        setResidentsLoading(false);
       }
     };
 
     fetchPlanetData();
   }, [planetId]);
+
+  const handleRetry = () => {
+    setError(null);
+    fetchPlanetData();
+  };
 
   const renderCharacterCard = ({ item }) => (
     <TouchableOpacity 
@@ -93,9 +97,9 @@ export default function PlanetDetailScreen() {
         <Text style={styles.errorText}>Error: {error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleRetry}
         >
-          <Text style={styles.retryButtonText}>Go Back</Text>
+          <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
     );

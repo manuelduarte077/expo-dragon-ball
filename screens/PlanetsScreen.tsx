@@ -1,47 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
+import React, { useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
   ActivityIndicator,
-  Dimensions
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+  Dimensions,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { toast } from 'sonner-native';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useStore } from "../core/store/store";
 
 const { width } = Dimensions.get('window');
 
+interface Planet {
+  id: number;
+  name: string;
+  isDestroyed: boolean;
+  description: string;
+  image: string;
+}
+
 export default function PlanetsScreen() {
+  const { planets, fetchPlanets, isLoading, error } = useStore();
   const navigation = useNavigation();
-  const [planets, setPlanets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchPlanets = async () => {
-      try {
-        const response = await fetch('https://dragonball-api.com/api/planets');
-        if (!response.ok) throw new Error('Failed to fetch planets');
-        const data = await response.json();
-        setPlanets(data);
-      } catch (err) {
-        setError(err.message);
-        toast.error('Error loading planets');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPlanets();
   }, []);
 
-  const renderPlanetCard = ({ item }) => (
+  const renderPlanetCard = ({ item }: { item: Planet }) => (
     <TouchableOpacity 
       style={styles.planetCard}
       onPress={() => navigation.navigate('PlanetDetail', { planetId: item.id })}
@@ -67,7 +59,7 @@ export default function PlanetsScreen() {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#3367FF" />
@@ -91,19 +83,13 @@ export default function PlanetsScreen() {
     <LinearGradient colors={['#1a1a2e', '#16213e', '#1a1a2e']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Planets</Text>
           <View style={styles.placeholder} />
         </View>
         
         <View style={styles.content}>
           <View style={styles.infoCard}>
-            <FontAwesome5 name="planet" size={24} color="#3367FF" style={styles.infoIcon} />
+            <Ionicons name="planet" size={24} color="#3367FF" style={styles.infoIcon} />
             <Text style={styles.infoText}>
               Explore the diverse planets from the Dragon Ball universe
             </Text>
@@ -171,9 +157,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  backButton: {
-    padding: 8,
-  },
+
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',

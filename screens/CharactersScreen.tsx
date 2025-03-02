@@ -1,108 +1,103 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  ActivityIndicator, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
   TextInput,
   Modal,
   ScrollView,
-  Dimensions
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { toast } from 'sonner-native';
+  Dimensions,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { toast } from "sonner-native";
+import { useStore } from "../core/store/store";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
+
+interface Character {
+  id: number;
+  name: string;
+  image: string;
+  isAlive: boolean;
+  originPlanet: { id: number; name: string };
+}
 
 export default function CharactersScreen() {
+  const {
+    characters,
+    planets,
+    fetchCharacters,
+    fetchPlanets,
+    isLoading,
+    error,
+  } = useStore();
   const navigation = useNavigation();
-  const [characters, setCharacters] = useState([]);
   const [filteredCharacters, setFilteredCharacters] = useState([]);
-  const [planets, setPlanets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlanet, setSelectedPlanet] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch characters
-        const charactersResponse = await fetch('https://dragonball-api.com/api/characters');
-        if (!charactersResponse.ok) throw new Error('Failed to fetch characters');
-        const charactersData = await charactersResponse.json();
-
-        // Fetch planets
-        const planetsResponse = await fetch('https://dragonball-api.com/api/planets');
-        if (!planetsResponse.ok) throw new Error('Failed to fetch planets');
-        const planetsData = await planetsResponse.json();
-        
-        // Ensure planets is an array
-        const planetsArray = Array.isArray(planetsData)
-          ? planetsData
-          : planetsData.planets || [];
-        
-        setCharacters(charactersData);
-        setFilteredCharacters(charactersData);
-        setPlanets(planetsArray);
-      } catch (err) {
-        setError(err.message);
-        toast.error('Error loading data');
-      } finally {
-        setLoading(false);
-      }
+    const loadInitialData = async () => {
+      await Promise.all([fetchCharacters(), fetchPlanets()]);
     };
 
-    fetchData();
+    loadInitialData();
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [searchQuery, selectedPlanet]);
+    if (characters) {
+      applyFilters();
+    }
+  }, [searchQuery, selectedPlanet, characters]);
 
   const applyFilters = () => {
     let filtered = [...characters];
-    
+
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(character => 
+      filtered = filtered.filter((character) =>
         character.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     // Apply planet filter
     if (selectedPlanet) {
-      filtered = filtered.filter(character => 
-        character.originPlanet?.id === selectedPlanet
+      filtered = filtered.filter(
+        (character) => character.originPlanet?.id === selectedPlanet
       );
     }
-    
+
     setFilteredCharacters(filtered);
   };
 
   const clearFilters = () => {
-    setSearchQuery('');
+    setSearchQuery("");
     setSelectedPlanet(null);
     setFilteredCharacters(characters);
     setShowFilters(false);
   };
 
   const renderCharacterCard = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('CharacterDetail', { characterId: item.id })}
+      onPress={() =>
+        navigation.navigate("CharacterDetail", { characterId: item.id })
+      }
     >
       <View style={styles.cardImageContainer}>
         <Image
-          source={{ 
-            uri: item.image || `https://api.a0.dev/assets/image?text=dragon ball character ${item.name}&seed=${item.id}` 
+          source={{
+            uri:
+              item.image ||
+              `https://api.a0.dev/assets/image?text=dragon ball character ${item.name}&seed=${item.id}`,
           }}
           style={styles.cardImage}
           resizeMode="cover"
@@ -115,15 +110,15 @@ export default function CharactersScreen() {
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.cardName}>{item.name}</Text>
-        <Text style={styles.cardRace}>{item.race || 'Unknown Race'}</Text>
+        <Text style={styles.cardRace}>{item.race || "Unknown Race"}</Text>
         <View style={styles.cardFooter}>
           <Text style={styles.cardPlanet}>
-            {item.originPlanet?.name || 'Unknown Planet'}
+            {item.originPlanet?.name || "Unknown Planet"}
           </Text>
           <View style={styles.powerContainer}>
             <MaterialIcons name="bolt" size={16} color="#FFC107" />
             <Text style={styles.powerLevel}>
-              {item.ki ? `${item.ki}` : 'Unknown'}
+              {item.ki ? `${item.ki}` : "Unknown"}
             </Text>
           </View>
         </View>
@@ -146,25 +141,25 @@ export default function CharactersScreen() {
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
           </View>
-          
+
           <Text style={styles.filterLabel}>Filter by Planet:</Text>
           <ScrollView style={styles.planetsList}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.planetItem, 
-                selectedPlanet === null && styles.selectedPlanetItem
+                styles.planetItem,
+                selectedPlanet === null && styles.selectedPlanetItem,
               ]}
               onPress={() => setSelectedPlanet(null)}
             >
               <Text style={styles.planetName}>All Planets</Text>
             </TouchableOpacity>
-            
-            {planets.map(planet => (
-              <TouchableOpacity 
+
+            {planets.map((planet) => (
+              <TouchableOpacity
                 key={planet.id}
                 style={[
-                  styles.planetItem, 
-                  selectedPlanet === planet.id && styles.selectedPlanetItem
+                  styles.planetItem,
+                  selectedPlanet === planet.id && styles.selectedPlanetItem,
                 ]}
                 onPress={() => setSelectedPlanet(planet.id)}
               >
@@ -172,16 +167,13 @@ export default function CharactersScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-          
+
           <View style={styles.modalFooter}>
-            <TouchableOpacity 
-              style={styles.clearButton} 
-              onPress={clearFilters}
-            >
+            <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
               <Text style={styles.clearButtonText}>Clear All</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.applyButton}
               onPress={() => setShowFilters(false)}
             >
@@ -193,14 +185,34 @@ export default function CharactersScreen() {
     </Modal>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B00" />
-        <Text style={styles.loadingText}>Loading characters...</Text>
-      </View>
-    );
-  }
+  const loadMoreCharacters = async () => {
+    if (isLoading || filteredCharacters.length === characters.length) return;
+
+    setIsLoading(true);
+    try {
+      // Fetch more characters
+      const moreCharactersResponse = await fetch(
+        "https://dragonball-api.com/api/characters"
+      );
+      if (!moreCharactersResponse.ok)
+        throw new Error("Failed to fetch more characters");
+      const moreCharactersData = await moreCharactersResponse.json();
+
+      setCharacters((prevCharacters) => [
+        ...prevCharacters,
+        ...moreCharactersData,
+      ]);
+      setFilteredCharacters((prevFilteredCharacters) => [
+        ...prevFilteredCharacters,
+        ...moreCharactersData,
+      ]);
+    } catch (err) {
+      setError(err.message);
+      toast.error("Error loading more characters");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (error) {
     return (
@@ -214,26 +226,28 @@ export default function CharactersScreen() {
   }
 
   return (
-    <LinearGradient colors={['#1a1a2e', '#16213e', '#1a1a2e']} style={styles.container}>
+    <LinearGradient
+      colors={["#1a1a2e", "#16213e", "#1a1a2e"]}
+      style={styles.container}
+    >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Characters</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setShowFilters(true)}
           >
             <Ionicons name="filter" size={22} color="white" />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={20}
+            color="#999"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search characters..."
@@ -242,28 +256,29 @@ export default function CharactersScreen() {
             onChangeText={setSearchQuery}
           />
           {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <Ionicons name="close-circle" size={20} color="#999" />
             </TouchableOpacity>
           ) : null}
         </View>
-        
+
         {selectedPlanet && (
           <View style={styles.activeFilterContainer}>
             <Text style={styles.activeFilterText}>
-              Planet: {planets.find(p => p.id === selectedPlanet)?.name || 'Unknown'}
+              Planet:{" "}
+              {planets.find((p) => p.id === selectedPlanet)?.name || "Unknown"}
             </Text>
             <TouchableOpacity onPress={() => setSelectedPlanet(null)}>
               <Ionicons name="close-circle" size={16} color="white" />
             </TouchableOpacity>
           </View>
         )}
-        
+
         {filteredCharacters.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={60} color="#666" />
             <Text style={styles.emptyText}>No characters found</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.clearFilterButton}
               onPress={clearFilters}
             >
@@ -274,13 +289,20 @@ export default function CharactersScreen() {
           <FlatList
             data={filteredCharacters}
             renderItem={renderCharacterCard}
-            keyExtractor={item => item.id.toString()}
+            keyExtractor={(item) => item.id.toString()}
             numColumns={2}
             contentContainerStyle={styles.characterList}
             showsVerticalScrollIndicator={false}
+            onEndReached={loadMoreCharacters}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={() =>
+              isLoading && characters.length > 0 ? (
+                <ActivityIndicator color="#FF6B00" style={{ padding: 20 }} />
+              ) : null
+            }
           />
         )}
-        
+
         {renderFilterModal()}
       </SafeAreaView>
     </LinearGradient>
@@ -296,60 +318,58 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1a1a2e",
   },
   loadingText: {
-    color: 'white',
+    color: "white",
     marginTop: 10,
     fontSize: 16,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1a1a2e",
     padding: 20,
   },
   errorText: {
-    color: 'white',
+    color: "white",
     marginBottom: 20,
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   retryButton: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: "#FF6B00",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
   retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  backButton: {
-    padding: 8,
-  },
+
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
   },
   filterButton: {
     padding: 8,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 25,
     margin: 16,
     paddingHorizontal: 15,
@@ -360,22 +380,22 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 45,
-    color: 'white',
+    color: "white",
     fontSize: 16,
   },
   activeFilterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,107,0,0.7)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,107,0,0.7)",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginHorizontal: 16,
     marginBottom: 10,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   activeFilterText: {
-    color: 'white',
+    color: "white",
     marginRight: 8,
     fontSize: 14,
   },
@@ -384,12 +404,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: 15,
     margin: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     width: (width - 50) / 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -399,93 +419,93 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cardImageContainer: {
-    position: 'relative',
+    position: "relative",
   },
   cardImage: {
-    width: '100%',
+    width: "100%",
     height: 150,
-    backgroundColor: '#333',
+    backgroundColor: "#333",
   },
   deceasedBadge: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     top: 0,
-    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    backgroundColor: "rgba(255, 0, 0, 0.8)",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderBottomLeftRadius: 10,
   },
   deceasedText: {
-    color: 'white',
+    color: "white",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   cardContent: {
     padding: 12,
   },
   cardName: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   cardRace: {
-    color: '#BBB',
+    color: "#BBB",
     fontSize: 14,
     marginTop: 2,
   },
   cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 8,
   },
   cardPlanet: {
-    color: '#AAA',
+    color: "#AAA",
     fontSize: 12,
     flex: 1,
   },
   powerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
   },
   powerLevel: {
-    color: '#FFC107',
+    color: "#FFC107",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   filterLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
   planetsList: {
     maxHeight: 300,
@@ -494,65 +514,65 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   selectedPlanetItem: {
-    backgroundColor: 'rgba(255,107,0,0.1)',
+    backgroundColor: "rgba(255,107,0,0.1)",
   },
   planetName: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     flex: 1,
     marginRight: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   clearButtonText: {
-    color: '#666',
-    fontWeight: 'bold',
+    color: "#666",
+    fontWeight: "bold",
   },
   applyButton: {
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#FF6B00',
+    backgroundColor: "#FF6B00",
     flex: 1,
     marginLeft: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   applyButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
-    color: '#AAA',
+    color: "#AAA",
     fontSize: 18,
     marginTop: 10,
     marginBottom: 20,
   },
   clearFilterButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: "rgba(255,255,255,0.1)",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
   clearFilterButtonText: {
-    color: '#FF6B00',
-    fontWeight: 'bold',
+    color: "#FF6B00",
+    fontWeight: "bold",
   },
 });
