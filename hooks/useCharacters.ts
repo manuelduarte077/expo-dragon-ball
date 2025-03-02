@@ -10,22 +10,12 @@ export function useCharacters(
   navigation: NativeStackNavigationProp<RootStackParamList>
 ) {
   const {
-    filteredCharacters,
-    searchQuery,
-    selectedPlanet,
-    showFilters,
-    activeFilters,
+    characters,
     isLoading,
     error,
-    planets,
-    setSearchQuery,
-    setSelectedPlanet,
-    setShowFilters,
-    setActiveFilters,
     loadMoreCharacters,
     fetchCharacters,
     fetchPlanets,
-    resetFilters,
   } = useApiStore();
 
   useEffect(() => {
@@ -37,36 +27,11 @@ export function useCharacters(
     navigation.navigate("CharacterDetail", { characterId });
   };
 
-  const handleFilterChange = (filters: {
-    isAlive?: boolean;
-    hasTransformations?: boolean;
-    power?: { min: number; max: number };
-  }) => {
-    setActiveFilters(filters);
-  };
-
   return {
-    // Data
-    filteredCharacters,
-    planets,
-
-    // Search and filters
-    searchQuery,
-    selectedPlanet,
-    showFilters,
-    activeFilters,
-
-    // Status
+    characters,
     isLoading,
     error,
-
-    // Actions
-    setSearchQuery,
-    setSelectedPlanet,
-    setShowFilters,
-    handleFilterChange,
     loadMoreCharacters,
     handleCharacterPress,
-    resetFilters,
   };
 }
