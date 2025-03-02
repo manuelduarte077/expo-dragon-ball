@@ -1,4 +1,5 @@
 import { QueryParams, PaginatedResponse } from "./api.interface";
+import { Character } from "./character.interface";
 
 export interface Transformation {
   id: number;
@@ -6,9 +7,9 @@ export interface Transformation {
   image: string;
   ki: string;
   maxKi: string;
-  character: number; // ID del personaje
+  character: Character;
   description: string;
-  deletedAt: null | string;
+  deletedAt: string | null;
 }
 
 export interface TransformationQueryParams extends QueryParams {
