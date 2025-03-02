@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   Dimensions,
-  Animated
+  Animated,
+  StatusBar
 } from 'react-native';
 import { useRoute, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -72,11 +73,9 @@ export default function CharacterDetailScreen() {
     setModelLoading(true);
     setShowModel(true);
     
-    // Simulate loading the 3D model
     setTimeout(() => {
       setModelLoading(false);
       
-      // Start rotation animation
       Animated.loop(
         Animated.timing(rotateY, {
           toValue: 1,
@@ -158,186 +157,197 @@ export default function CharacterDetailScreen() {
   });
 
   return (
-    <LinearGradient colors={['#1a1a2e', '#16213e', '#1a1a2e']} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => navigation.goBack()}
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      
+      {/* Character Image and Content */}
+      <ScrollView 
+        style={styles.scrollView} 
+        bounces={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <View style={styles.heroSection}>
+          <Image
+            source={{ 
+              uri: character?.image || `https://api.a0.dev/assets/image?text=dragon ball character ${character?.name}&seed=${character?.id}` 
+            }}
+            style={styles.characterImage}
+            resizeMode="contain"
+          />
+          
+          <LinearGradient
+            colors={['rgba(26,26,46,0)', 'rgba(26,26,46,0.8)', '#1a1a2e']}
+            style={styles.heroGradient}
           >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{character?.name}</Text>
-          <View style={styles.placeholder} />
-        </View>
-        
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Hero Section */}
-          <View style={styles.heroSection}>
-            <Image
-              source={{ 
-                uri: character?.image || `https://api.a0.dev/assets/image?text=dragon ball character ${character?.name}&seed=${character?.id}` 
-              }}
-              style={styles.characterImage}
-              resizeMode="cover"
-            />
+            <View style={styles.characterNameContainer}>
+              <Text style={styles.characterName}>{character?.name}</Text>
+              {character?.isAlive === false && (
+                <View style={styles.deceasedBadge}>
+                  <Text style={styles.deceasedText}>Deceased</Text>
+                </View>
+              )}
+            </View>
             
-            <LinearGradient
-              colors={['transparent', 'rgba(26, 26, 46, 0.8)', '#1a1a2e']}
-              style={styles.heroGradient}
-            >
-              <View style={styles.characterNameContainer}>
-                <Text style={styles.characterName}>{character?.name}</Text>
-                {character?.isAlive === false && (
-                  <View style={styles.deceasedBadge}>
-                    <Text style={styles.deceasedText}>Deceased</Text>
-                  </View>
-                )}
+            <View style={styles.characterInfoRow}>
+              <View style={styles.infoChip}>
+                <MaterialCommunityIcons name="dna" size={16} color="#FF6B00" />
+                <Text style={styles.infoText}>{character?.race || 'Unknown Race'}</Text>
               </View>
               
-              <View style={styles.characterInfoRow}>
+              {character?.gender && (
                 <View style={styles.infoChip}>
-                  <MaterialCommunityIcons name="dna" size={16} color="#FF6B00" />
-                  <Text style={styles.infoText}>{character?.race || 'Unknown Race'}</Text>
+                  <Ionicons 
+                    name={character?.gender.toLowerCase() === 'male' ? 'male' : 'female'} 
+                    size={16} 
+                    color="#4a69ff" 
+                  />
+                  <Text style={styles.infoText}>{character?.gender}</Text>
                 </View>
-                
-                {character?.gender && (
-                  <View style={styles.infoChip}>
-                    <Ionicons 
-                      name={character?.gender.toLowerCase() === 'male' ? 'male' : 'female'} 
-                      size={16} 
-                      color="#4a69ff" 
-                    />
-                    <Text style={styles.infoText}>{character?.gender}</Text>
-                  </View>
-                )}
-                
-                {character?.ki && (
-                  <View style={styles.infoChip}>
-                    <Ionicons name="flash" size={16} color="#FFC107" />
-                    <Text style={styles.infoText}>Power: {character?.ki}</Text>
-                  </View>
-                )}
-              </View>
-
-              <TouchableOpacity 
-                style={styles.viewModelButton}
-                onPress={handleShowModel}
-                disabled={showModel}
-              >
-                <Ionicons name="cube" size={16} color="white" style={styles.buttonIcon} />
-                <Text style={styles.viewModelButtonText}>View 3D Model</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-          
-          {/* 3D Model Viewer */}
-          {showModel && (
-            <View style={styles.modelContainer}>
-              {modelLoading ? (
-                <View style={styles.modelLoading}>
-                  <ActivityIndicator size="large" color="#FF6B00" />
-                  <Text style={styles.modelLoadingText}>Loading 3D model...</Text>
-                </View>
-              ) : (
-                <PanGestureHandler onGestureEvent={handleGesture}>
-                  <Animated.View 
-                    style={[
-                      styles.modelWrapper,
-                      { 
-                        transform: [
-                          { rotateY: spin },
-                          { rotateX: tiltX }
-                        ] 
-                      }
-                    ]}
-                  >
-                    <Image
-                      source={{ 
-                        uri: `https://api.a0.dev/assets/image?text=3d model of ${character?.name} from dragon ball z in T-pose&seed=${character?.id}` 
-                      }}
-                      style={styles.modelImage}
-                      resizeMode="contain"
-                    />
-                  </Animated.View>
-                </PanGestureHandler>
               )}
-              <Text style={styles.modelInstructions}>
-                Rotate with your finger to view all angles
-              </Text>
+              
+              {character?.ki && (
+                <View style={styles.infoChip}>
+                  <Ionicons name="flash" size={16} color="#FFC107" />
+                  <Text style={styles.infoText}>Power: {character?.ki}</Text>
+                </View>
+              )}
             </View>
-          )}
-          
-          {/* Character Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>
-              {character?.description ||
-                "No description available for this character."}
+
+            <TouchableOpacity 
+              style={styles.viewModelButton}
+              onPress={handleShowModel}
+              disabled={showModel}
+            >
+              <Ionicons name="cube" size={16} color="white" style={styles.buttonIcon} />
+              <Text style={styles.viewModelButtonText}>View 3D Model</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+        
+        {/* 3D Model Viewer */}
+        {showModel && (
+          <View style={styles.modelContainer}>
+            {modelLoading ? (
+              <View style={styles.modelLoading}>
+                <ActivityIndicator size="large" color="#FF6B00" />
+                <Text style={styles.modelLoadingText}>Loading 3D model...</Text>
+              </View>
+            ) : (
+              <PanGestureHandler onGestureEvent={handleGesture}>
+                <Animated.View 
+                  style={[
+                    styles.modelWrapper,
+                    { 
+                      transform: [
+                        { rotateY: spin },
+                        { rotateX: tiltX }
+                      ] 
+                    }
+                  ]}
+                >
+                  <Image
+                    source={{ 
+                      uri: `https://api.a0.dev/assets/image?text=3d model of ${character?.name} from dragon ball z in T-pose&seed=${character?.id}` 
+                    }}
+                    style={styles.modelImage}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+              </PanGestureHandler>
+            )}
+            <Text style={styles.modelInstructions}>
+              Rotate with your finger to view all angles
             </Text>
           </View>
+        )}
+        
+        {/* Character Description */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.descriptionText}>
+            {character?.description ||
+              "No description available for this character."}
+          </Text>
+        </View>
 
-          {/* Planet Info */}
-          {character?.originPlanet && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Origin Planet</Text>
-              <TouchableOpacity 
-                style={styles.planetCard}
-                onPress={() => {
-                  if (character?.originPlanet?.id) {
-                    navigation.navigate('PlanetsTab', {
-                      screen: 'PlanetDetail',
-                      params: { planetId: character.originPlanet.id }
-                    });
-                  }
+        {/* Planet Info */}
+        {character?.originPlanet && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Origin Planet</Text>
+            <TouchableOpacity 
+              style={styles.planetCard}
+              onPress={() => {
+                if (character?.originPlanet?.id) {
+                  navigation.navigate('PlanetsTab', {
+                    screen: 'PlanetDetail',
+                    params: { planetId: character.originPlanet.id }
+                  });
+                }
+              }}
+            >
+              <Image
+                source={{ 
+                  uri: `https://api.a0.dev/assets/image?text=planet ${character?.originPlanet?.name} from dragon ball&seed=${character?.originPlanet?.id}` 
                 }}
-              >
-                <Image
-                  source={{ 
-                    uri: `https://api.a0.dev/assets/image?text=planet ${character?.originPlanet?.name} from dragon ball&seed=${character?.originPlanet?.id}` 
-                  }}
-                  style={styles.planetImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.planetInfo}>
-                  <Text style={styles.planetName}>{character?.originPlanet?.name}</Text>
-                  <Text style={styles.viewPlanetText}>View Details</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#AAA" />
-              </TouchableOpacity>
-            </View>
-          )}
-          
-          {/* Transformations */}
-          {formatTransformations() && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Transformations</Text>
-              {formatTransformations()}
-            </View>
-          )}
-          
-          {/* Affiliations */}
-          {character?.affiliation && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Affiliation</Text>
-              <View style={styles.affiliationChip}>
-                <Text style={styles.affiliationText}>{character.affiliation}</Text>
+                style={styles.planetImage}
+                resizeMode="cover"
+              />
+              <View style={styles.planetInfo}>
+                <Text style={styles.planetName}>{character?.originPlanet?.name}</Text>
+                <Text style={styles.viewPlanetText}>View Details</Text>
               </View>
+              <Ionicons name="chevron-forward" size={20} color="#AAA" />
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {/* Transformations */}
+        {formatTransformations() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Transformations</Text>
+            {formatTransformations()}
+          </View>
+        )}
+        
+        {/* Affiliations */}
+        {character?.affiliation && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Affiliation</Text>
+            <View style={styles.affiliationChip}>
+              <Text style={styles.affiliationText}>{character.affiliation}</Text>
             </View>
-          )}
-        </ScrollView>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Floating Back Button with gradient background */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
+        style={styles.backButtonGradient}
+        pointerEvents="none"
+      />
+      <SafeAreaView style={styles.backButtonContainer} edges={['top']}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1a1a2e',
   },
-  safeArea: {
+  scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -373,35 +383,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    zIndex: 10,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
   heroSection: {
+    width: '100%',
+    height: 600, // Increased height for full image
     position: 'relative',
-    height: 400,
   },
   characterImage: {
     width: '100%',
-    height: 400,
+    height: 600,
     position: 'absolute',
   },
   heroGradient: {
@@ -409,9 +398,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 200,
+    height: 250,
     justifyContent: 'flex-end',
     padding: 16,
+  },
+  backButtonGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    zIndex: 1,
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+    zIndex: 2,
+  },
+  backButton: {
+    margin: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   characterNameContainer: {
     flexDirection: 'row',
@@ -419,10 +433,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   characterName: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: 'white',
     marginRight: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   deceasedBadge: {
     backgroundColor: 'rgba(255, 0, 0, 0.8)',

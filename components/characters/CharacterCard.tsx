@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Character } from '@/interface/character.interface';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -13,117 +15,116 @@ interface CharacterCardProps {
 export function CharacterCard({ character, onPress }: CharacterCardProps) {
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={styles.container}
       onPress={() => onPress(character.id)}
+      activeOpacity={0.7}
     >
       <View style={styles.imageContainer}>
         <Image
           source={{
-            uri: character.image ||
-              `https://api.a0.dev/assets/image?text=dragon ball character ${character.name}&seed=${character.id}`,
+            uri: `https://api.a0.dev/assets/image?text=${character.name} from dragon ball&seed=${character.id}`,
           }}
           style={styles.image}
           resizeMode="cover"
         />
-        {character.isAlive === false && (
-          <View style={styles.deceasedBadge}>
-            <Text style={styles.deceasedText}>Deceased</Text>
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.8)"]}
+          style={styles.gradient}
+        >
+          <Text style={styles.name}>{character.name}</Text>
+        </LinearGradient>
+      </View>
+
+      <View style={styles.infoContainer}>
+        {character.originPlanet && (
+          <View style={styles.infoRow}>
+            <Ionicons name="planet-outline" size={16} color="#FF6B00" />
+            <Text style={styles.infoText}>{character.originPlanet.name}</Text>
           </View>
         )}
-      </View>
-      <View style={styles.content}>
-        <Text style={styles.name}>{character.name}</Text>
-        <Text style={styles.race}>{character.race || 'Unknown Race'}</Text>
-        <View style={styles.footer}>
-          <Text style={styles.planet}>
-            {character.originPlanet?.name || 'Unknown Planet'}
+        <View style={styles.infoRow}>
+          <Ionicons name="flash" size={16} color="#FFC107" />
+          <Text style={styles.infoText}>
+            {character.maxKi?.toLocaleString() || "Unknown"}
           </Text>
-          <View style={styles.powerContainer}>
-            <MaterialIcons name="bolt" size={16} color="#FFC107" />
-            <Text style={styles.powerLevel}>
-              {character.ki ? `${character.ki}` : 'Unknown'}
-            </Text>
-          </View>
         </View>
       </View>
+
+      {character.transformations && character.transformations.length > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {character.transformations.length} forms
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 15,
+  container: {
+    flex: 1,
     margin: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
     overflow: 'hidden',
-    width: (width - 50) / 2,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
   imageContainer: {
     position: 'relative',
+    height: 200,
+    width: '100%',
   },
   image: {
     width: '100%',
-    height: 150,
-    backgroundColor: '#333',
+    height: '100%',
   },
-  deceasedBadge: {
+  gradient: {
     position: 'absolute',
+    bottom: 0,
+    left: 0,
     right: 0,
-    top: 0,
-    backgroundColor: 'rgba(255, 0, 0, 0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderBottomLeftRadius: 10,
-  },
-  deceasedText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  content: {
+    height: 80,
+    justifyContent: 'flex-end',
     padding: 12,
   },
   name: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
-  race: {
-    color: '#BBB',
+  infoContainer: {
+    padding: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  infoText: {
+    color: '#CCC',
+    marginLeft: 8,
     fontSize: 14,
-    marginTop: 2,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
+  badge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255,107,0,0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  planet: {
-    color: '#AAA',
-    fontSize: 12,
-    flex: 1,
-  },
-  powerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  powerLevel: {
-    color: '#FFC107',
+  badgeText: {
+    color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
-    marginLeft: 2,
   },
 }); 
